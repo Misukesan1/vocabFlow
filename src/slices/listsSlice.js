@@ -77,6 +77,14 @@ const listsSlice = createSlice({
     setActiveList: (state, action) => {
       state.activeListId = action.payload;
     },
+
+    // Action pour hydrater l'état depuis localStorage
+    hydrateFromStorage: (state, action) => {
+      if (action.payload) {
+        state.lists = action.payload.lists || [];
+        state.activeListId = action.payload.activeListId || null;
+      }
+    },
   },
 });
 
@@ -88,6 +96,7 @@ export const {
   updateWord,
   deleteWord,
   setActiveList,
+  hydrateFromStorage,
 } = listsSlice.actions;
 
 export default listsSlice.reducer;
