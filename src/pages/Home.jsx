@@ -118,14 +118,6 @@ export default function Home() {
           ))}
         </div>
       </div>
-
-      {/* Bouton créer nouvelle liste */}
-      <button
-        onClick={handleCreateList}
-        className="w-full bg-white border-2 border-purple-600 text-purple-600 font-medium py-3 px-6 rounded-xl transition-all active:scale-95 hover:bg-purple-50"
-      >
-        Créer une nouvelle liste
-      </button>
     </div>
   );
 }

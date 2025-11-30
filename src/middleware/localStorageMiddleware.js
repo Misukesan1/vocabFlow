@@ -16,6 +16,7 @@ const localStorageMiddleware = (store) => (next) => (action) => {
     'lists/addWord',
     'lists/updateWord',
     'lists/deleteWord',
+    'lists/incrementTrainingRound',
   ];
 
   // If the action should trigger a save, save the updated state

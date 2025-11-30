@@ -11,6 +11,11 @@ import { loadListsFromStorage } from "./utils/localStorage"
 // Load persisted data from localStorage on app startup
 const persistedLists = loadListsFromStorage();
 if (persistedLists) {
+  console.log('📦 Données chargées depuis localStorage:', persistedLists);
+  console.log('📊 Détail des tours par liste:');
+  persistedLists.lists?.forEach(list => {
+    console.log(`  - ${list.name}: ${list.trainingRounds || 0} tours`);
+  });
   store.dispatch(hydrateFromStorage(persistedLists));
 }
 

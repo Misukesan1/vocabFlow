@@ -13,6 +13,7 @@ import {
   updateList,
   deleteList,
   setActiveList,
+  startTraining,
 } from '../../slices/listsSlice';
 
 const ListDetailView = () => {
@@ -97,6 +98,10 @@ const ListDetailView = () => {
     dispatch(deleteList(activeListId));
   };
 
+  const handleStartTraining = () => {
+    dispatch(startTraining());
+  };
+
   return (
     <div className="flex flex-col h-full pb-20">
       <div className="sticky top-0 bg-white border-b border-gray-200 p-4 z-10">
@@ -127,9 +132,23 @@ const ListDetailView = () => {
         <p className="text-xs text-gray-400 mt-1">
           {list.words.length} mot{list.words.length !== 1 ? 's' : ''}
         </p>
+        {list.trainingRounds > 0 && (
+          <p className="text-xs text-purple-500 mt-1">
+            {list.trainingRounds} tour{list.trainingRounds !== 1 ? 's' : ''} d'entraînement
+          </p>
+        )}
       </div>
 
       <div className="p-4">
+        {list.words.length > 0 && (
+          <button
+            onClick={handleStartTraining}
+            className="flex items-center justify-center gap-2 w-full px-4 py-3 mb-3 bg-green-600 text-white rounded-xl transition-all active:scale-95 hover:bg-green-700"
+          >
+            <span className="text-sm font-medium">Commencer l'entraînement</span>
+          </button>
+        )}
+
         <button
           onClick={() => setIsCreateWordModalOpen(true)}
           className="flex items-center justify-center gap-2 w-full px-4 py-3 mb-4 bg-purple-600 text-white rounded-xl transition-all active:scale-95 hover:bg-purple-700"

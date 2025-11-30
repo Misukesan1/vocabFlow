@@ -10,6 +10,7 @@ import { useSelector } from "react-redux";
 function App() {
 
   const activePage = useSelector((state) => state.navBar.activeTab);
+  const isTrainingMode = useSelector((state) => state.lists.isTrainingMode);
   console.log(activePage)
 
   return (
@@ -19,8 +20,8 @@ function App() {
       {activePage === "lists" && <Lists />}
       {activePage === "stats" && <Stats />}
       {activePage === "settings" && <Settings />}
-      
-      <BottomNavBar />
+
+      {!isTrainingMode && <BottomNavBar />}
     </>
   )
 

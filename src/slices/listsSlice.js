@@ -4,6 +4,7 @@ import { nanoid } from '@reduxjs/toolkit';
 const initialState = {
   lists: [],
   activeListId: null,
+  isTrainingMode: false,
 };
 
 const listsSlice = createSlice({
@@ -16,6 +17,7 @@ const listsSlice = createSlice({
         id: nanoid(),
         name: action.payload.name,
         createdAt: new Date().toISOString(),
+        trainingRounds: 0,
         words: [],
       };
       state.lists.push(newList);
@@ -34,6 +36,7 @@ const listsSlice = createSlice({
       // Si la liste active est supprimée, réinitialiser activeListId
       if (state.activeListId === action.payload) {
         state.activeListId = null;
+        state.isTrainingMode = false;
       }
     },
 
@@ -78,12 +81,42 @@ const listsSlice = createSlice({
       state.activeListId = action.payload;
     },
 
+    // Actions pour le mode entraînement
+    startTraining: (state) => {
+      state.isTrainingMode = true;
+    },
+
+    exitTraining: (state) => {
+      state.isTrainingMode = false;
+    },
+
+    incrementTrainingRound: (state, action) => {
+      const listId = action.payload;
+      const list = state.lists.find((list) => list.id === listId);
+      if (list) {
+        list.trainingRounds += 1;
+      }
+    },
+
     // Action pour hydrater l'état depuis localStorage
     hydrateFromStorage: (state, action) => {
       if (action.payload) {
-        state.lists = action.payload.lists || [];
+        // Migrer les listes existantes pour ajouter trainingRounds
+        const lists = action.payload.lists?.map(list => ({
+          ...list,
+          trainingRounds: list.trainingRounds ?? 0,
+        })) || [];
+
+        state.lists = lists;
         state.activeListId = action.payload.activeListId || null;
       }
+    },
+
+    // Action pour réinitialiser toutes les données
+    resetAll: (state) => {
+      state.lists = [];
+      state.activeListId = null;
+      state.isTrainingMode = false;
     },
   },
 });
@@ -96,7 +129,11 @@ export const {
   updateWord,
   deleteWord,
   setActiveList,
+  startTraining,
+  exitTraining,
+  incrementTrainingRound,
   hydrateFromStorage,
+  resetAll,
 } = listsSlice.actions;
 
 export default listsSlice.reducer;
