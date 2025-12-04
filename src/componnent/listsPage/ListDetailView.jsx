@@ -14,6 +14,8 @@ import {
   deleteList,
   setActiveList,
   startTraining,
+  toggleWordSelection,
+  toggleAllWordsSelection,
 } from '../../slices/listsSlice';
 
 const ListDetailView = () => {
@@ -22,6 +24,11 @@ const ListDetailView = () => {
   const list = useSelector((state) =>
     state.lists.lists.find((l) => l.id === activeListId)
   );
+
+  // Calcul du nombre de mots sélectionnés
+  const selectedWordsCount = list?.words.filter(word => word.isSelected).length || 0;
+  const totalWordsCount = list?.words.length || 0;
+  const allSelected = selectedWordsCount === totalWordsCount && totalWordsCount > 0;
 
   const [isCreateWordModalOpen, setIsCreateWordModalOpen] = useState(false);
   const [isEditWordModalOpen, setIsEditWordModalOpen] = useState(false);
@@ -102,6 +109,17 @@ const ListDetailView = () => {
     dispatch(startTraining());
   };
 
+  const handleToggleWordSelection = (wordId) => {
+    dispatch(toggleWordSelection({ listId: activeListId, wordId }));
+  };
+
+  const handleToggleAllWords = () => {
+    dispatch(toggleAllWordsSelection({
+      listId: activeListId,
+      selectAll: !allSelected
+    }));
+  };
+
   return (
     <div className="flex flex-col h-full pb-20">
       <div className="sticky top-0 bg-white border-b border-gray-200 p-4 z-10">
@@ -132,6 +150,11 @@ const ListDetailView = () => {
         <p className="text-xs text-gray-400 mt-1">
           {list.words.length} mot{list.words.length !== 1 ? 's' : ''}
         </p>
+        {list.words.length > 0 && (
+          <p className="text-xs text-purple-500 mt-1">
+            {selectedWordsCount}/{totalWordsCount} mot{selectedWordsCount !== 1 ? 's' : ''} sélectionné{selectedWordsCount !== 1 ? 's' : ''}
+          </p>
+        )}
         {list.trainingRounds > 0 && (
           <p className="text-xs text-purple-500 mt-1">
             {list.trainingRounds} tour{list.trainingRounds !== 1 ? 's' : ''} d'entraînement
@@ -143,9 +166,28 @@ const ListDetailView = () => {
         {list.words.length > 0 && (
           <button
             onClick={handleStartTraining}
-            className="flex items-center justify-center gap-2 w-full px-4 py-3 mb-3 bg-green-600 text-white rounded-xl transition-all active:scale-95 hover:bg-green-700"
+            disabled={selectedWordsCount === 0}
+            className={`
+              flex items-center justify-center gap-2 w-full px-4 py-3 mb-3
+              rounded-xl transition-all
+              ${selectedWordsCount === 0
+                ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                : 'bg-green-600 text-white active:scale-95 hover:bg-green-700'
+              }
+            `}
           >
             <span className="text-sm font-medium">Commencer l'entraînement</span>
+          </button>
+        )}
+
+        {list.words.length > 0 && (
+          <button
+            onClick={handleToggleAllWords}
+            className="flex items-center justify-center gap-2 w-full px-4 py-3 mb-3 bg-purple-100 text-purple-600 rounded-xl transition-all active:scale-95 hover:bg-purple-200"
+          >
+            <span className="text-sm font-medium">
+              {allSelected ? 'Tout désélectionner' : 'Tout sélectionner'}
+            </span>
           </button>
         )}
 
@@ -174,6 +216,7 @@ const ListDetailView = () => {
                 word={word}
                 onEdit={() => handleEditWord(word)}
                 onDelete={() => handleDeleteWord(word.id)}
+                onToggleSelection={() => handleToggleWordSelection(word.id)}
               />
             ))}
           </div>

@@ -20,7 +20,9 @@ const TrainingView = () => {
   // Mélange les mots à chaque nouveau tour
   useEffect(() => {
     if (list && list.words.length > 0) {
-      const shuffled = [...list.words].sort(() => Math.random() - 0.5);
+      // Filtrer uniquement les mots sélectionnés
+      const selectedWords = list.words.filter(word => word.isSelected);
+      const shuffled = [...selectedWords].sort(() => Math.random() - 0.5);
       setShuffledWords(shuffled);
       setCurrentWordIndex(0);
       setIsRevealed(false);

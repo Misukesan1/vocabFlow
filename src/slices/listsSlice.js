@@ -50,6 +50,7 @@ const listsSlice = createSlice({
           kanji,
           romaji,
           meaning,
+          isSelected: true,
         };
         list.words.push(newWord);
       }
@@ -73,6 +74,28 @@ const listsSlice = createSlice({
       const list = state.lists.find((list) => list.id === listId);
       if (list) {
         list.words = list.words.filter((word) => word.id !== wordId);
+      }
+    },
+
+    // Actions pour la sélection de mots
+    toggleWordSelection: (state, action) => {
+      const { listId, wordId } = action.payload;
+      const list = state.lists.find((list) => list.id === listId);
+      if (list) {
+        const word = list.words.find((word) => word.id === wordId);
+        if (word) {
+          word.isSelected = !word.isSelected;
+        }
+      }
+    },
+
+    toggleAllWordsSelection: (state, action) => {
+      const { listId, selectAll } = action.payload;
+      const list = state.lists.find((list) => list.id === listId);
+      if (list) {
+        list.words.forEach((word) => {
+          word.isSelected = selectAll;
+        });
       }
     },
 
@@ -101,10 +124,14 @@ const listsSlice = createSlice({
     // Action pour hydrater l'état depuis localStorage
     hydrateFromStorage: (state, action) => {
       if (action.payload) {
-        // Migrer les listes existantes pour ajouter trainingRounds
+        // Migrer les listes existantes pour ajouter trainingRounds et isSelected
         const lists = action.payload.lists?.map(list => ({
           ...list,
           trainingRounds: list.trainingRounds ?? 0,
+          words: list.words?.map(word => ({
+            ...word,
+            isSelected: word.isSelected ?? true,
+          })) || [],
         })) || [];
 
         state.lists = lists;
@@ -128,6 +155,8 @@ export const {
   addWord,
   updateWord,
   deleteWord,
+  toggleWordSelection,
+  toggleAllWordsSelection,
   setActiveList,
   startTraining,
   exitTraining,

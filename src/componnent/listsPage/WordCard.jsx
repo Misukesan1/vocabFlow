@@ -1,8 +1,26 @@
 import { Edit2, Trash2 } from 'lucide-react';
 
-const WordCard = ({ word, onEdit, onDelete }) => {
+const WordCard = ({ word, onEdit, onDelete, onToggleSelection }) => {
+  const handleCardClick = (e) => {
+    // Ne pas toggle si on clique sur les boutons
+    if (e.target.closest('button')) {
+      return;
+    }
+    onToggleSelection();
+  };
+
   return (
-    <div className="flex flex-col gap-2 p-4 bg-white border border-gray-200 rounded-xl">
+    <div
+      onClick={handleCardClick}
+      className={`
+        flex flex-col gap-2 p-4 bg-white border rounded-xl cursor-pointer
+        transition-all
+        ${word.isSelected
+          ? 'border-gray-300 opacity-100'
+          : 'border-gray-100 opacity-50'
+        }
+      `}
+    >
       <div className="flex justify-between items-start">
         <div className="flex-1">
           <div className="text-base font-medium text-gray-700 mb-1">
