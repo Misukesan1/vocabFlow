@@ -16,11 +16,12 @@ function App() {
 
   return (
     <>
-
-      {activePage === "home" && <Home />}
-      {activePage === "lists" && <Lists />}
-      {activePage === "stats" && <Stats />}
-      {activePage === "settings" && <Settings />}
+      <div className="pb-24">
+        {activePage === "home" && <Home />}
+        {activePage === "lists" && <Lists />}
+        {activePage === "stats" && <Stats />}
+        {activePage === "settings" && <Settings />}
+      </div>
 
       {!isTrainingMode && <BottomNavBar />}
       <ToastContainer />
