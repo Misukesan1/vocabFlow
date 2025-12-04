@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { ArrowLeft } from 'lucide-react';
 import { exitTraining, incrementTrainingRound, toggleWordSelection } from '../../slices/listsSlice';
+import { addToast } from '../../slices/toastSlice';
 
 const TrainingView = () => {
   const dispatch = useDispatch();
@@ -17,6 +18,7 @@ const TrainingView = () => {
   const [showRoundComplete, setShowRoundComplete] = useState(false);
   const [isRoundAnimating, setIsRoundAnimating] = useState(false);
   const [isFadingOut, setIsFadingOut] = useState(false);
+  const [initialWordCount, setInitialWordCount] = useState(0);
 
   // Mélange les mots à chaque nouveau tour
   useEffect(() => {
@@ -25,10 +27,12 @@ const TrainingView = () => {
       const selectedWords = list.words.filter(word => word.isSelected);
       const shuffled = [...selectedWords].sort(() => Math.random() - 0.5);
       setShuffledWords(shuffled);
+      setInitialWordCount(shuffled.length);
       setCurrentWordIndex(0);
       setIsRevealed(false);
     }
-  }, [currentRound, list]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentRound]);
 
   // Animation du compteur quand il change
   useEffect(() => {
@@ -49,6 +53,10 @@ const TrainingView = () => {
       // Clic sur message de fin → Nouveau tour
       setCurrentRound((prev) => prev + 1);
       dispatch(incrementTrainingRound(activeListId));
+      dispatch(addToast({
+        message: `Tour ${currentRound + 1} commencé !`,
+        type: 'success'
+      }));
       setShowRoundComplete(false);
       return;
     }
@@ -59,6 +67,10 @@ const TrainingView = () => {
       // Dernier mot du tour
       if (currentWordIndex + 1 >= shuffledWords.length) {
         setShowRoundComplete(true);
+        dispatch(addToast({
+          message: `Tour ${currentRound} terminé !`,
+          type: 'success'
+        }));
       } else {
         setCurrentWordIndex((prev) => prev + 1);
         setIsRevealed(false);
@@ -68,6 +80,10 @@ const TrainingView = () => {
 
   const handleExitTraining = () => {
     dispatch(exitTraining());
+    dispatch(addToast({
+      message: 'Entraînement terminé',
+      type: 'info'
+    }));
   };
 
   const handleDeselectWord = (e) => {
@@ -75,23 +91,19 @@ const TrainingView = () => {
     setIsFadingOut(true);
 
     setTimeout(() => {
+      // Mettre à jour Redux (la désélection sera effective au prochain tour)
       dispatch(toggleWordSelection({
         listId: activeListId,
         wordId: currentWord.id
       }));
+      dispatch(addToast({
+        message: 'Mot désélectionné',
+        type: 'info'
+      }));
 
-      // Recalculer les mots sélectionnés restants
-      const updatedWords = shuffledWords.map(w =>
-        w.id === currentWord.id ? { ...w, isSelected: false } : w
-      );
-      const remainingSelectedWords = updatedWords.filter(w => w.isSelected);
-
-      // Navigation automatique
-      if (remainingSelectedWords.length === 0) {
-        // Plus aucun mot sélectionné → fin du tour
-        setShowRoundComplete(true);
-      } else if (currentWordIndex + 1 >= shuffledWords.length) {
-        // C'était le dernier mot de la liste → fin du tour
+      // Continuer l'entraînement comme si on avait cliqué sur "Continuer"
+      if (currentWordIndex + 1 >= shuffledWords.length) {
+        // Dernier mot du tour
         setShowRoundComplete(true);
       } else {
         // Passer au mot suivant
@@ -107,7 +119,7 @@ const TrainingView = () => {
     <div className="flex flex-col h-full">
       {/* Header */}
       <div className="sticky top-0 bg-white border-b border-gray-200 p-4 z-10">
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between mb-2">
           <button
             onClick={handleExitTraining}
             className="flex items-center gap-2 text-purple-600 transition-all active:scale-95"
@@ -125,6 +137,21 @@ const TrainingView = () => {
             Tour de liste : {currentRound}
           </p>
         </div>
+        {!showRoundComplete && (
+          <div className="flex items-center justify-center gap-2">
+            <div className="flex-1 bg-gray-200 rounded-full h-2 overflow-hidden">
+              <div
+                className="bg-gradient-to-r from-purple-500 to-indigo-500 h-full transition-all duration-300"
+                style={{
+                  width: `${((currentWordIndex + 1) / initialWordCount) * 100}%`
+                }}
+              />
+            </div>
+            <span className="text-xs font-medium text-gray-600 min-w-[3rem] text-right">
+              {currentWordIndex + 1}/{initialWordCount}
+            </span>
+          </div>
+        )}
       </div>
 
       {/* Training Card ou Message de fin */}

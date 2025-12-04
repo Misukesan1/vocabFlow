@@ -4,6 +4,7 @@ import { BookOpen, Sparkles, Target, Zap } from 'lucide-react';
 import { setTab } from '../slices/navBarSlice';
 import ListCard from '../componnent/listsPage/ListCard';
 import { setActiveList } from '../slices/listsSlice';
+import { addToast } from '../slices/toastSlice';
 
 export default function Home() {
   const dispatch = useDispatch();
@@ -19,6 +20,10 @@ export default function Home() {
 
   const handleCreateList = () => {
     dispatch(setTab('lists'));
+    dispatch(addToast({
+      message: 'Navigation vers la création de liste',
+      type: 'info'
+    }));
   };
 
   const handleListClick = (listId) => {

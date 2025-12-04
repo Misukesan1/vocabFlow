@@ -17,6 +17,7 @@ import {
   toggleWordSelection,
   toggleAllWordsSelection,
 } from '../../slices/listsSlice';
+import { addToast } from '../../slices/toastSlice';
 
 const ListDetailView = () => {
   const dispatch = useDispatch();
@@ -53,6 +54,10 @@ const ListDetailView = () => {
         ...wordData,
       })
     );
+    dispatch(addToast({
+      message: 'Mot ajouté avec succès',
+      type: 'success'
+    }));
   };
 
   const handleEditWord = (word) => {
@@ -68,6 +73,10 @@ const ListDetailView = () => {
         ...wordData,
       })
     );
+    dispatch(addToast({
+      message: 'Mot modifié avec succès',
+      type: 'success'
+    }));
     setSelectedWord(null);
   };
 
@@ -84,6 +93,10 @@ const ListDetailView = () => {
           wordId: wordToDelete,
         })
       );
+      dispatch(addToast({
+        message: 'Mot supprimé',
+        type: 'info'
+      }));
       setWordToDelete(null);
     }
   };
@@ -95,6 +108,10 @@ const ListDetailView = () => {
         name: newName,
       })
     );
+    dispatch(addToast({
+      message: 'Liste renommée avec succès',
+      type: 'success'
+    }));
   };
 
   const handleDeleteList = () => {
@@ -103,10 +120,18 @@ const ListDetailView = () => {
 
   const confirmDeleteList = () => {
     dispatch(deleteList(activeListId));
+    dispatch(addToast({
+      message: 'Liste supprimée',
+      type: 'info'
+    }));
   };
 
   const handleStartTraining = () => {
     dispatch(startTraining());
+    dispatch(addToast({
+      message: 'Entraînement commencé !',
+      type: 'success'
+    }));
   };
 
   const handleToggleWordSelection = (wordId) => {
@@ -117,6 +142,10 @@ const ListDetailView = () => {
     dispatch(toggleAllWordsSelection({
       listId: activeListId,
       selectAll: !allSelected
+    }));
+    dispatch(addToast({
+      message: allSelected ? 'Tous les mots désélectionnés' : 'Tous les mots sélectionnés',
+      type: 'info'
     }));
   };
 

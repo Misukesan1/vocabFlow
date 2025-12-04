@@ -4,6 +4,7 @@ import { Plus } from 'lucide-react';
 import ListCard from './ListCard';
 import CreateListModal from './CreateListModal';
 import { createList, setActiveList } from '../../slices/listsSlice';
+import { addToast } from '../../slices/toastSlice';
 
 const ListsView = () => {
   const dispatch = useDispatch();
@@ -12,6 +13,10 @@ const ListsView = () => {
 
   const handleCreateList = (name) => {
     dispatch(createList({ name }));
+    dispatch(addToast({
+      message: `Liste "${name}" créée avec succès`,
+      type: 'success'
+    }));
   };
 
   const handleListClick = (listId) => {

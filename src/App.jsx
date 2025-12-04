@@ -1,4 +1,5 @@
 import BottomNavBar from "./componnent/BottomNavBar"
+import ToastContainer from "./componnent/ToastContainer"
 
 import Home from "./pages/Home"
 import Lists from "./pages/Lists"
@@ -22,6 +23,7 @@ function App() {
       {activePage === "settings" && <Settings />}
 
       {!isTrainingMode && <BottomNavBar />}
+      <ToastContainer />
     </>
   )
 
