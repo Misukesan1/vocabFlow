@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { ArrowLeft } from 'lucide-react';
-import { exitTraining, incrementTrainingRound } from '../../slices/listsSlice';
+import { exitTraining, incrementTrainingRound, toggleWordSelection } from '../../slices/listsSlice';
 
 const TrainingView = () => {
   const dispatch = useDispatch();
@@ -16,6 +16,7 @@ const TrainingView = () => {
   const [currentRound, setCurrentRound] = useState(1);
   const [showRoundComplete, setShowRoundComplete] = useState(false);
   const [isRoundAnimating, setIsRoundAnimating] = useState(false);
+  const [isFadingOut, setIsFadingOut] = useState(false);
 
   // Mélange les mots à chaque nouveau tour
   useEffect(() => {
@@ -69,6 +70,39 @@ const TrainingView = () => {
     dispatch(exitTraining());
   };
 
+  const handleDeselectWord = (e) => {
+    e.stopPropagation();
+    setIsFadingOut(true);
+
+    setTimeout(() => {
+      dispatch(toggleWordSelection({
+        listId: activeListId,
+        wordId: currentWord.id
+      }));
+
+      // Recalculer les mots sélectionnés restants
+      const updatedWords = shuffledWords.map(w =>
+        w.id === currentWord.id ? { ...w, isSelected: false } : w
+      );
+      const remainingSelectedWords = updatedWords.filter(w => w.isSelected);
+
+      // Navigation automatique
+      if (remainingSelectedWords.length === 0) {
+        // Plus aucun mot sélectionné → fin du tour
+        setShowRoundComplete(true);
+      } else if (currentWordIndex + 1 >= shuffledWords.length) {
+        // C'était le dernier mot de la liste → fin du tour
+        setShowRoundComplete(true);
+      } else {
+        // Passer au mot suivant
+        setCurrentWordIndex((prev) => prev + 1);
+        setIsRevealed(false);
+      }
+
+      setIsFadingOut(false);
+    }, 300);
+  };
+
   return (
     <div className="flex flex-col h-full">
       {/* Header */}
@@ -107,12 +141,13 @@ const TrainingView = () => {
           </div>
         </div>
       ) : (
-        <div className="flex-1 flex items-center justify-center p-4">
+        <div className="flex-1 flex flex-col items-center justify-center p-4 gap-4">
           <div
             onClick={handleCardClick}
             className={`
-              cursor-pointer p-8 rounded-2xl transition-all
+              cursor-pointer p-8 rounded-2xl transition-all duration-300
               border-2 shadow-lg bg-white max-w-2xl
+              ${isFadingOut ? 'opacity-50 scale-95' : 'opacity-100'}
               ${
                 !isRevealed
                   ? 'border-purple-300 hover:shadow-xl hover:scale-105 animate-pulse'
@@ -144,6 +179,15 @@ const TrainingView = () => {
               </>
             )}
           </div>
+
+          {isRevealed && (
+            <button
+              onClick={handleDeselectWord}
+              className="px-4 py-2 text-sm font-medium text-white bg-purple-600 rounded-lg transition-all active:scale-95 hover:bg-purple-700"
+            >
+              Désélectionner
+            </button>
+          )}
         </div>
       )}
     </div>

@@ -1,0 +1,50 @@
+ Suggestions d'amélioration
+15. Statistiques manquantes
+Suggestions pour la page Stats:
+Nombre total de mots appris
+Mots par liste (graphique)
+Streak de jours consécutifs
+Temps passé en entraînement
+Mots les plus difficiles (désélectionnés souvent)
+16. Gamification
+Badges pour milestones (10 listes, 100 mots, 50 tours)
+Streak journalier
+Encouragements après un tour complété
+17. Export/Import
+Exporter les listes en JSON/CSV
+Importer depuis Anki, Quizlet
+Partager une liste avec un ami
+18. Mode d'entraînement alternatifs
+Mode "QCM" avec choix multiples
+Mode "Écriture" pour taper la réponse
+Mode "Écoute" avec synthèse vocale
+19. Personnalisation
+Changer la couleur du thème (pas que purple)
+Taille de police ajustable
+Mode sombre
+20. Raccourcis clavier (PWA desktop)
+Espace = Révéler/Continuer
+D = Désélectionner
+Flèches = Navigation
+🎯 Priorisation recommandée
+P0 - À faire en priorité:
+✅ Ajouter feedback toast après actions (création, modification, suppression)
+✅ Ajouter indicateur de progression dans l'entraînement (X/Y mots)
+✅ Remplir la page Stats avec données basiques
+P1 - Important:
+✅ Message explicatif quand bouton entraînement est désactivé
+✅ Améliorer message fin de tour avec statistiques
+✅ Améliorer visibilité sélection (checkmark/badge)
+P2 - Nice to have:
+Ajouter recherche/tri dans les listes
+Tutorial au premier lancement
+Bouton "Ajouter un autre mot" dans le modal
+P3 - Future:
+Modes d'entraînement alternatifs
+Export/Import
+Gamification complète
+Conclusion: L'application a une base solide avec un bon design et des 
+fonctionnalités essentielles. Les principaux points d'amélioration 
+concernent le feedback utilisateur, les statistiques et l'expérience 
+d'entraînement. En priorité: ajouter des toasts de confirmation et un 
+indicateur de progression.
