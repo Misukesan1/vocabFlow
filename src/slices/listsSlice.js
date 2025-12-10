@@ -5,6 +5,7 @@ const initialState = {
   lists: [],
   activeListId: null,
   isTrainingMode: false,
+  cardInversionMode: false,
 };
 
 const listsSlice = createSlice({
@@ -121,6 +122,10 @@ const listsSlice = createSlice({
       }
     },
 
+    setCardInversionMode: (state, action) => {
+      state.cardInversionMode = action.payload;
+    },
+
     // Action pour hydrater l'état depuis localStorage
     hydrateFromStorage: (state, action) => {
       if (action.payload) {
@@ -136,6 +141,7 @@ const listsSlice = createSlice({
 
         state.lists = lists;
         state.activeListId = action.payload.activeListId || null;
+        state.cardInversionMode = action.payload.cardInversionMode ?? false;
       }
     },
 
@@ -144,6 +150,7 @@ const listsSlice = createSlice({
       state.lists = [];
       state.activeListId = null;
       state.isTrainingMode = false;
+      state.cardInversionMode = false;
     },
   },
 });
@@ -161,6 +168,7 @@ export const {
   startTraining,
   exitTraining,
   incrementTrainingRound,
+  setCardInversionMode,
   hydrateFromStorage,
   resetAll,
 } = listsSlice.actions;

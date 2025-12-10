@@ -36,6 +36,7 @@ const ListDetailView = () => {
   const [isEditListModalOpen, setIsEditListModalOpen] = useState(false);
   const [isDeleteWordModalOpen, setIsDeleteWordModalOpen] = useState(false);
   const [isDeleteListModalOpen, setIsDeleteListModalOpen] = useState(false);
+  const [isToggleAllModalOpen, setIsToggleAllModalOpen] = useState(false);
   const [selectedWord, setSelectedWord] = useState(null);
   const [wordToDelete, setWordToDelete] = useState(null);
 
@@ -139,6 +140,15 @@ const ListDetailView = () => {
   };
 
   const handleToggleAllWords = () => {
+    // Ne pas montrer le modal si on désélectionne tout et qu'il n'y a aucun mot sélectionné
+    // Ou si on sélectionne tout et que tous les mots sont déjà sélectionnés
+    if ((allSelected && selectedWordsCount === 0) || (!allSelected && selectedWordsCount === totalWordsCount)) {
+      return;
+    }
+    setIsToggleAllModalOpen(true);
+  };
+
+  const confirmToggleAllWords = () => {
     dispatch(toggleAllWordsSelection({
       listId: activeListId,
       selectAll: !allSelected
@@ -298,6 +308,21 @@ const ListDetailView = () => {
         confirmText="Supprimer"
         cancelText="Annuler"
         variant="danger"
+      />
+
+      <ConfirmModal
+        isOpen={isToggleAllModalOpen}
+        onClose={() => setIsToggleAllModalOpen(false)}
+        onConfirm={confirmToggleAllWords}
+        title={allSelected ? 'Tout désélectionner' : 'Tout sélectionner'}
+        message={
+          allSelected
+            ? 'Êtes-vous sûr de vouloir désélectionner tous les mots ?'
+            : 'Êtes-vous sûr de vouloir sélectionner tous les mots ?'
+        }
+        confirmText={allSelected ? 'Tout désélectionner' : 'Tout sélectionner'}
+        cancelText="Annuler"
+        variant="primary"
       />
     </div>
   );

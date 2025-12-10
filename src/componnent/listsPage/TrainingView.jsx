@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
-import { ArrowLeft } from 'lucide-react';
-import { exitTraining, incrementTrainingRound, toggleWordSelection } from '../../slices/listsSlice';
+import { ArrowLeft, RefreshCw } from 'lucide-react';
+import { exitTraining, incrementTrainingRound, toggleWordSelection, setCardInversionMode } from '../../slices/listsSlice';
 import { addToast } from '../../slices/toastSlice';
 
 const TrainingView = () => {
@@ -10,6 +10,7 @@ const TrainingView = () => {
   const list = useSelector((state) =>
     state.lists.lists.find((l) => l.id === activeListId)
   );
+  const isFaceInverted = useSelector((state) => state.lists.cardInversionMode);
 
   const [shuffledWords, setShuffledWords] = useState([]);
   const [currentWordIndex, setCurrentWordIndex] = useState(0);
@@ -19,6 +20,8 @@ const TrainingView = () => {
   const [isRoundAnimating, setIsRoundAnimating] = useState(false);
   const [isFadingOut, setIsFadingOut] = useState(false);
   const [initialWordCount, setInitialWordCount] = useState(0);
+  const [isFlipping, setIsFlipping] = useState(false);
+  const [isToggleChanging, setIsToggleChanging] = useState(false);
 
   // Mélange les mots à chaque nouveau tour
   useEffect(() => {
@@ -62,7 +65,11 @@ const TrainingView = () => {
     }
 
     if (!isRevealed) {
-      setIsRevealed(true);
+      setIsFlipping(true);
+      setTimeout(() => {
+        setIsRevealed(true);
+        setIsFlipping(false);
+      }, 200); // Moitié de l'animation (400ms total)
     } else {
       // Dernier mot du tour
       if (currentWordIndex + 1 >= shuffledWords.length) {
@@ -113,6 +120,20 @@ const TrainingView = () => {
 
       setIsFadingOut(false);
     }, 300);
+  };
+
+  const handleToggleInversion = () => {
+    if (isRevealed) {
+      // Si la carte est retournée, on ajoute une animation de transition
+      setIsToggleChanging(true);
+      setTimeout(() => {
+        dispatch(setCardInversionMode(!isFaceInverted));
+        setIsToggleChanging(false);
+      }, 150);
+    } else {
+      // Si la carte n'est pas retournée, changement direct
+      dispatch(setCardInversionMode(!isFaceInverted));
+    }
   };
 
   return (
@@ -169,42 +190,126 @@ const TrainingView = () => {
         </div>
       ) : (
         <div className="flex-1 flex flex-col items-center justify-center p-4 gap-4">
+          {/* Toggle d'inversion de carte */}
+          <div className="flex items-center justify-center gap-3 mb-2">
+            <span className="text-sm font-medium text-gray-600">Kanji → Traduction</span>
+            <button
+              onClick={handleToggleInversion}
+              className={`p-2 rounded-lg transition-all duration-200 ${
+                isFaceInverted
+                  ? 'bg-purple-600 text-white shadow-md'
+                  : 'bg-gray-200 text-gray-600 hover:bg-gray-300'
+              }`}
+              aria-label="Inverser la carte"
+              title={isFaceInverted ? "Mode: Traduction → Kanji" : "Mode: Kanji → Traduction"}
+            >
+              <RefreshCw className="w-5 h-5" />
+            </button>
+            <span className="text-sm font-medium text-gray-600">Traduction → Kanji</span>
+          </div>
+
+          {/* Conteneur avec perspective pour l'effet 3D */}
           <div
-            onClick={handleCardClick}
-            className={`
-              cursor-pointer p-8 rounded-2xl transition-all duration-300
-              border-2 shadow-lg bg-white max-w-2xl
-              ${isFadingOut ? 'opacity-50 scale-95' : 'opacity-100'}
-              ${
-                !isRevealed
-                  ? 'border-purple-300 hover:shadow-xl hover:scale-105 animate-pulse'
-                  : 'border-green-300 hover:shadow-xl'
-              }
-            `}
+            className="relative max-w-2xl w-full"
+            style={{ perspective: '1000px' }}
           >
-            {!isRevealed ? (
-              <>
-                <h1 className="text-6xl font-bold text-gray-800 text-center mb-4">
-                  {currentWord.kanji}
-                </h1>
-                <p className="text-sm text-gray-400 text-center mt-6">
-                  Cliquez pour révéler
-                </p>
-              </>
-            ) : (
-              <>
-                <div className="space-y-4 text-center">
-                  <h1 className="text-6xl font-bold text-gray-800">
-                    {currentWord.kanji}
-                  </h1>
-                  <p className="text-2xl text-gray-500 mt-2">{currentWord.romaji}</p>
-                  <p className="text-xl text-gray-600 mt-4">{currentWord.meaning}</p>
+            <div
+              onClick={handleCardClick}
+              className={`
+                relative cursor-pointer p-8 rounded-2xl
+                border-2 shadow-lg bg-white
+                transition-all duration-600
+                ${isFadingOut ? 'opacity-50 scale-95' : 'opacity-100'}
+                ${
+                  !isRevealed
+                    ? 'border-purple-300 hover:shadow-xl hover:scale-105 animate-pulse'
+                    : 'border-green-300 hover:shadow-xl'
+                }
+              `}
+              style={{
+                transformStyle: 'preserve-3d',
+                transform: isFlipping || isRevealed ? 'rotateY(180deg)' : 'rotateY(0deg)',
+                transition: 'transform 0.4s cubic-bezier(0.4, 0.0, 0.2, 1)'
+              }}
+            >
+              {/* Face avant */}
+              <div
+                className="absolute inset-0 p-8 rounded-2xl bg-white flex flex-col items-center justify-center"
+                style={{
+                  backfaceVisibility: 'hidden',
+                  WebkitBackfaceVisibility: 'hidden',
+                  transform: 'rotateY(0deg)'
+                }}
+              >
+                <div className="text-center">
+                  {!isFaceInverted ? (
+                    // Mode normal : Kanji en face avant
+                    <>
+                      <h1 className="text-5xl font-bold text-gray-800 mb-4">
+                        {currentWord.kanji}
+                      </h1>
+                      <p className="text-sm text-gray-400 mt-6">
+                        Cliquez pour révéler
+                      </p>
+                    </>
+                  ) : (
+                    // Mode inversé : Traduction française en face avant
+                    <>
+                      <h1 className="text-5xl font-bold text-gray-800 mb-4">
+                        {currentWord.meaning}
+                      </h1>
+                      <p className="text-sm text-gray-400 mt-6">
+                        Cliquez pour révéler
+                      </p>
+                    </>
+                  )}
                 </div>
-                <p className="text-sm text-gray-400 text-center mt-6">
-                  Cliquez pour continuer
-                </p>
-              </>
-            )}
+              </div>
+
+              {/* Face arrière */}
+              <div
+                className={`p-8 rounded-2xl bg-white flex flex-col items-center justify-center transition-opacity duration-300 ${
+                  isToggleChanging ? 'opacity-0' : 'opacity-100'
+                }`}
+                style={{
+                  backfaceVisibility: 'hidden',
+                  WebkitBackfaceVisibility: 'hidden',
+                  transform: 'rotateY(180deg)'
+                }}
+              >
+                <div className="text-center">
+                  {!isFaceInverted ? (
+                    // Mode normal : Kanji + Romaji + Traduction en face arrière
+                    <>
+                      <div className="space-y-3">
+                        <h1 className="text-5xl font-bold text-gray-800">
+                          {currentWord.kanji}
+                        </h1>
+                        <p className="text-2xl text-gray-500">{currentWord.romaji}</p>
+                        <p className="text-xl text-gray-600">{currentWord.meaning}</p>
+                      </div>
+                      <p className="text-sm text-gray-400 mt-6">
+                        Cliquez pour continuer
+                      </p>
+                    </>
+                  ) : (
+                    // Mode inversé : Traduction + Kanji + Romaji en face arrière
+                    <>
+                      <div className="space-y-3">
+                        <h1 className="text-5xl font-bold text-gray-800">
+                          {currentWord.meaning}
+                        </h1>
+                        <p className="text-2xl text-gray-500">{currentWord.kanji}</p>
+                        <p className="text-2xl text-gray-500">{currentWord.romaji}</p>
+                      </div>
+                      <p className="text-sm text-gray-400 mt-6">
+                        Cliquez pour continuer
+                      </p>
+                    </>
+                  )}
+                </div>
+              </div>
+            </div>
           </div>
 
           {isRevealed && (
