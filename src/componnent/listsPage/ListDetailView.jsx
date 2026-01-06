@@ -59,6 +59,8 @@ const ListDetailView = () => {
       message: 'Mot ajouté avec succès',
       type: 'success'
     }));
+    // Scroll instantané vers le haut pour voir le bouton "Ajouter un mot"
+    window.scrollTo(0, 0);
   };
 
   const handleEditWord = (word) => {
