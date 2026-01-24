@@ -18,21 +18,30 @@ const TrainingView = () => {
   const [currentRound, setCurrentRound] = useState(1);
   const [showRoundComplete, setShowRoundComplete] = useState(false);
   const [isRoundAnimating, setIsRoundAnimating] = useState(false);
-  const [isFadingOut, setIsFadingOut] = useState(false);
   const [initialWordCount, setInitialWordCount] = useState(0);
   const [isFlipping, setIsFlipping] = useState(false);
   const [isToggleChanging, setIsToggleChanging] = useState(false);
+  const [showAllDeselected, setShowAllDeselected] = useState(false);
+  const [slideDirection, setSlideDirection] = useState(null); // 'out', 'in', ou null
 
   // Mélange les mots à chaque nouveau tour
   useEffect(() => {
     if (list && list.words.length > 0) {
       // Filtrer uniquement les mots sélectionnés
       const selectedWords = list.words.filter(word => word.isSelected);
+
+      if (selectedWords.length === 0) {
+        setShowAllDeselected(true);
+        setShuffledWords([]);
+        return;
+      }
+
       const shuffled = [...selectedWords].sort(() => Math.random() - 0.5);
       setShuffledWords(shuffled);
       setInitialWordCount(shuffled.length);
       setCurrentWordIndex(0);
       setIsRevealed(false);
+      setShowAllDeselected(false);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentRound]);
@@ -45,9 +54,10 @@ const TrainingView = () => {
     }
   }, [currentRound]);
 
-  if (!list || shuffledWords.length === 0) {
+  if (!list) {
     return null;
   }
+  // Ne pas retourner null pour shuffledWords vide - géré par showAllDeselected
 
   const currentWord = shuffledWords[currentWordIndex];
 
@@ -65,22 +75,34 @@ const TrainingView = () => {
     }
 
     if (!isRevealed) {
+      // Révéler la carte (flip 3D reste ici)
       setIsFlipping(true);
       setTimeout(() => {
         setIsRevealed(true);
         setIsFlipping(false);
       }, 200); // Moitié de l'animation (400ms total)
     } else {
-      // Dernier mot du tour
+      // Carte révélée → Passer au mot suivant avec animation Slide
       if (currentWordIndex + 1 >= shuffledWords.length) {
+        // Dernier mot du tour
         setShowRoundComplete(true);
         dispatch(addToast({
           message: `Tour ${currentRound} terminé !`,
           type: 'success'
         }));
       } else {
-        setCurrentWordIndex((prev) => prev + 1);
-        setIsRevealed(false);
+        // Animation Slide pour passer au mot suivant
+        setSlideDirection('out');
+
+        setTimeout(() => {
+          setCurrentWordIndex((prev) => prev + 1);
+          setIsRevealed(false);
+          setSlideDirection('in');
+
+          setTimeout(() => {
+            setSlideDirection(null);
+          }, 400);
+        }, 400);
       }
     }
   };
@@ -95,31 +117,60 @@ const TrainingView = () => {
 
   const handleDeselectWord = (e) => {
     e.stopPropagation();
-    setIsFadingOut(true);
 
-    setTimeout(() => {
-      // Mettre à jour Redux (la désélection sera effective au prochain tour)
+    // Sauvegarder l'ID du mot actuel avant de changer d'index
+    const wordToDeselectId = currentWord.id;
+
+    // Vérifier si c'était le dernier mot sélectionné
+    const remainingSelectedWords = list.words.filter(word =>
+      word.isSelected && word.id !== currentWord.id
+    );
+
+    if (remainingSelectedWords.length === 0) {
+      // Désélectionner immédiatement car on va vers l'écran "tous désélectionnés"
       dispatch(toggleWordSelection({
         listId: activeListId,
-        wordId: currentWord.id
+        wordId: wordToDeselectId
+      }));
+      dispatch(addToast({
+        message: 'Mot désélectionné',
+        type: 'info'
+      }));
+      setShowAllDeselected(true);
+      return;
+    }
+
+    // ÉTAPE 1 : Déclencher l'animation de sortie (slide out left)
+    setSlideDirection('out');
+
+    // ÉTAPE 2 : Attendre 400ms (fin de l'animation) avant de changer de mot
+    setTimeout(() => {
+      // Désélectionner le mot
+      dispatch(toggleWordSelection({
+        listId: activeListId,
+        wordId: wordToDeselectId
       }));
       dispatch(addToast({
         message: 'Mot désélectionné',
         type: 'info'
       }));
 
-      // Continuer l'entraînement comme si on avait cliqué sur "Continuer"
+      // Vérifier s'il faut afficher la fin du tour
       if (currentWordIndex + 1 >= shuffledWords.length) {
-        // Dernier mot du tour
         setShowRoundComplete(true);
+        setSlideDirection(null);
       } else {
-        // Passer au mot suivant
+        // Passer au mot suivant et déclencher l'animation d'entrée (slide in right)
         setCurrentWordIndex((prev) => prev + 1);
         setIsRevealed(false);
-      }
+        setSlideDirection('in');
 
-      setIsFadingOut(false);
-    }, 300);
+        // Réinitialiser slideDirection après l'animation d'entrée
+        setTimeout(() => {
+          setSlideDirection(null);
+        }, 400);
+      }
+    }, 400);
   };
 
   const handleToggleInversion = () => {
@@ -175,8 +226,26 @@ const TrainingView = () => {
         )}
       </div>
 
-      {/* Training Card ou Message de fin */}
-      {showRoundComplete ? (
+      {/* Training Card ou Messages */}
+      {showAllDeselected ? (
+        // Écran tous mots désélectionnés
+        <div className="flex-1 flex items-center justify-center p-4">
+          <div className="text-center">
+            <h2 className="text-3xl font-bold text-gray-800 mb-4">
+              Tous les mots sont désélectionnés
+            </h2>
+            <p className="text-gray-500 mb-8">
+              Vous avez désélectionné tous les mots de cette liste.
+            </p>
+            <button
+              onClick={handleExitTraining}
+              className="px-6 py-3 bg-purple-600 text-white rounded-xl font-medium transition-all active:scale-95 hover:bg-purple-700"
+            >
+              Retour à la liste
+            </button>
+          </div>
+        </div>
+      ) : showRoundComplete ? (
         <div
           onClick={handleCardClick}
           className="flex-1 flex items-center justify-center p-4 cursor-pointer animate-fade-in"
@@ -188,7 +257,7 @@ const TrainingView = () => {
             <p className="text-sm text-gray-400 mt-4">Cliquez pour continuer</p>
           </div>
         </div>
-      ) : (
+      ) : shuffledWords.length > 0 ? (
         <div className="flex-1 flex flex-col items-center justify-center p-4 gap-4">
           {/* Toggle d'inversion de carte */}
           <div className="flex items-center justify-center gap-3 mb-2">
@@ -219,7 +288,8 @@ const TrainingView = () => {
                 relative cursor-pointer p-8 rounded-2xl
                 border-2 shadow-lg bg-white
                 transition-all duration-600
-                ${isFadingOut ? 'opacity-50 scale-95' : 'opacity-100'}
+                ${slideDirection === 'out' ? 'animate-slide-out-left' : ''}
+                ${slideDirection === 'in' ? 'animate-slide-in-right' : ''}
                 ${
                   !isRevealed
                     ? 'border-purple-300 hover:shadow-xl hover:scale-105 animate-pulse'
@@ -229,7 +299,7 @@ const TrainingView = () => {
               style={{
                 transformStyle: 'preserve-3d',
                 transform: isFlipping || isRevealed ? 'rotateY(180deg)' : 'rotateY(0deg)',
-                transition: 'transform 0.4s cubic-bezier(0.4, 0.0, 0.2, 1)'
+                transition: slideDirection ? 'none' : 'transform 0.4s cubic-bezier(0.4, 0.0, 0.2, 1)'
               }}
             >
               {/* Face avant */}
@@ -321,7 +391,7 @@ const TrainingView = () => {
             </button>
           )}
         </div>
-      )}
+      ) : null}
     </div>
   );
 };

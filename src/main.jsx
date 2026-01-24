@@ -6,23 +6,55 @@ import App from './App.jsx'
 import { Provider } from "react-redux";
 import { store } from "./store"
 import { hydrateFromStorage } from "./slices/listsSlice"
-import { loadListsFromStorage } from "./utils/localStorage"
+import { initStorage, loadState } from "./utils/storageManager"
 
-// Load persisted data from localStorage on app startup
-const persistedLists = loadListsFromStorage();
-if (persistedLists) {
-  console.log('📦 Données chargées depuis localStorage:', persistedLists);
-  console.log('📊 Détail des tours par liste:');
-  persistedLists.lists?.forEach(list => {
-    console.log(`  - ${list.name}: ${list.trainingRounds || 0} tours`);
-  });
-  store.dispatch(hydrateFromStorage(persistedLists));
+/**
+ * Asynchronous application initialization
+ * Handles storage initialization and data migration
+ */
+async function initApp() {
+  try {
+    // Initialize storage system (handles automatic migration if needed)
+    const storageType = await initStorage();
+    console.log('📦 Storage system:', storageType);
+
+    // Load persisted data
+    const persistedLists = await loadState();
+
+    if (persistedLists) {
+      console.log('📦 Data loaded:', persistedLists);
+      console.log('📊 Training rounds by list:');
+      persistedLists.lists?.forEach(list => {
+        console.log(`  - ${list.name}: ${list.trainingRounds || 0} rounds`);
+      });
+
+      // Hydrate Redux store
+      store.dispatch(hydrateFromStorage(persistedLists));
+    } else {
+      console.log('📦 No persisted data found');
+    }
+
+    // Render application
+    createRoot(document.getElementById('root')).render(
+      <StrictMode>
+        <Provider store={store}>
+          <App />
+        </Provider>
+      </StrictMode>,
+    );
+  } catch (error) {
+    console.error('❌ Application initialization error:', error);
+
+    // Fallback: render app anyway (with empty state)
+    createRoot(document.getElementById('root')).render(
+      <StrictMode>
+        <Provider store={store}>
+          <App />
+        </Provider>
+      </StrictMode>,
+    );
+  }
 }
 
-createRoot(document.getElementById('root')).render(
-  <StrictMode>
-    <Provider store={store}>
-      <App />
-    </Provider>
-  </StrictMode>,
-)
+// Start the application
+initApp();

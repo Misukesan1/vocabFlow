@@ -2,7 +2,7 @@ import { configureStore } from "@reduxjs/toolkit";
 import navBarSlice from "./slices/navBarSlice"
 import listsSlice from "./slices/listsSlice"
 import toastSlice from "./slices/toastSlice"
-import localStorageMiddleware from "./middleware/localStorageMiddleware"
+import storageMiddleware from "./middleware/storageMiddleware"
 
 export const store = configureStore({
   reducer: {
@@ -11,5 +11,5 @@ export const store = configureStore({
     toast: toastSlice,
   },
   middleware: (getDefaultMiddleware) =>
-    getDefaultMiddleware().concat(localStorageMiddleware),
+    getDefaultMiddleware().concat(storageMiddleware),
 });
