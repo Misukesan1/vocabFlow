@@ -1,8 +1,9 @@
 import { useState } from 'react';
-import { X } from 'lucide-react';
+import { X, BookOpen, PenTool, MessageCircle } from 'lucide-react';
 
 const CreateListModal = ({ isOpen, onClose, onCreateList }) => {
   const [listName, setListName] = useState('');
+  const [category, setCategory] = useState('words');
   const [error, setError] = useState('');
 
   const MAX_LENGTH = 200;
@@ -33,14 +34,16 @@ const CreateListModal = ({ isOpen, onClose, onCreateList }) => {
     if (!validateInput(listName)) {
       return; // Arrêter ici si la validation échoue
     }
-    onCreateList(listName.trim());
+    onCreateList(listName.trim(), category);
     setListName('');
+    setCategory('words');
     setError('');
     onClose();
   };
 
   const handleClose = () => {
     setListName('');
+    setCategory('words');
     setError('');
     onClose();
   };
@@ -89,6 +92,56 @@ const CreateListModal = ({ isOpen, onClose, onCreateList }) => {
             <p className="mt-1 text-xs text-gray-400">
               {listName.length}/{MAX_LENGTH} caractères
             </p>
+          </div>
+
+          <div className="mb-4">
+            <label className="block text-sm font-medium text-gray-700 mb-3">
+              Type de contenu
+            </label>
+            <div className="grid grid-cols-3 gap-2">
+              <button
+                type="button"
+                onClick={() => setCategory('words')}
+                className={`flex flex-col items-center gap-2 p-3 rounded-lg border-2 transition-all ${
+                  category === 'words'
+                    ? 'border-purple-600 bg-purple-50'
+                    : 'border-gray-200 hover:border-purple-300'
+                }`}
+              >
+                <BookOpen className={`w-6 h-6 ${category === 'words' ? 'text-purple-600' : 'text-gray-400'}`} />
+                <span className={`text-xs font-medium ${category === 'words' ? 'text-purple-600' : 'text-gray-600'}`}>
+                  Mots
+                </span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setCategory('kanji')}
+                className={`flex flex-col items-center gap-2 p-3 rounded-lg border-2 transition-all ${
+                  category === 'kanji'
+                    ? 'border-blue-600 bg-blue-50'
+                    : 'border-gray-200 hover:border-blue-300'
+                }`}
+              >
+                <PenTool className={`w-6 h-6 ${category === 'kanji' ? 'text-blue-600' : 'text-gray-400'}`} />
+                <span className={`text-xs font-medium ${category === 'kanji' ? 'text-blue-600' : 'text-gray-600'}`}>
+                  Kanji
+                </span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setCategory('verbs')}
+                className={`flex flex-col items-center gap-2 p-3 rounded-lg border-2 transition-all ${
+                  category === 'verbs'
+                    ? 'border-orange-600 bg-orange-50'
+                    : 'border-gray-200 hover:border-orange-300'
+                }`}
+              >
+                <MessageCircle className={`w-6 h-6 ${category === 'verbs' ? 'text-orange-600' : 'text-gray-400'}`} />
+                <span className={`text-xs font-medium ${category === 'verbs' ? 'text-orange-600' : 'text-gray-600'}`}>
+                  Verbes
+                </span>
+              </button>
+            </div>
           </div>
 
           <div className="flex gap-2 justify-end">

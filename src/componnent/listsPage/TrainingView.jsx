@@ -11,6 +11,7 @@ const TrainingView = () => {
     state.lists.lists.find((l) => l.id === activeListId)
   );
   const isFaceInverted = useSelector((state) => state.lists.cardInversionMode);
+  const listCategory = list?.category || 'words';
 
   const [shuffledWords, setShuffledWords] = useState([]);
   const [currentWordIndex, setCurrentWordIndex] = useState(0);
@@ -23,6 +24,89 @@ const TrainingView = () => {
   const [isToggleChanging, setIsToggleChanging] = useState(false);
   const [showAllDeselected, setShowAllDeselected] = useState(false);
   const [slideDirection, setSlideDirection] = useState(null); // 'out', 'in', ou null
+
+  // Fonctions helpers pour le contenu dynamique selon la catégorie
+  const getFrontContent = (word, category, inverted) => {
+    if (!inverted) {
+      // Mode normal : afficher la "question"
+      switch(category) {
+        case 'words':
+        case 'kanji':
+          return word.kanji;
+        case 'verbs':
+          return word.infinitive;
+        default:
+          return word.kanji;
+      }
+    } else {
+      // Mode inversé : afficher la "réponse"
+      switch(category) {
+        case 'words':
+        case 'kanji':
+          return word.meaning;
+        case 'verbs':
+          return word.politeForm;
+        default:
+          return word.meaning;
+      }
+    }
+  };
+
+  const getBackContent = (word, category, inverted) => {
+    if (!inverted) {
+      // Mode normal : afficher la réponse complète
+      switch(category) {
+        case 'words':
+          return { main: word.kanji, sub1: word.romaji, sub2: word.meaning };
+        case 'kanji':
+          return {
+            main: word.kanji,
+            isKanji: true,
+            kunReading: word.kunReading || 'N/A',
+            kunExample: word.kunExample || 'N/A',
+            onReading: word.onReading || 'N/A',
+            onExample: word.onExample || 'N/A',
+            meaning: word.meaning
+          };
+        case 'verbs':
+          return {
+            main: word.infinitive,
+            isVerb: true,
+            progressive: word.progressive,
+            politeForm: word.politeForm,
+            meaning: word.meaning
+          };
+        default:
+          return { main: word.kanji, sub1: word.romaji, sub2: word.meaning };
+      }
+    } else {
+      // Mode inversé : afficher la question complète
+      switch(category) {
+        case 'words':
+          return { main: word.meaning, sub1: word.kanji, sub2: word.romaji };
+        case 'kanji':
+          return {
+            main: word.meaning,
+            isKanjiInverted: true,
+            kanji: word.kanji,
+            kunReading: word.kunReading || 'N/A',
+            kunExample: word.kunExample || 'N/A',
+            onReading: word.onReading || 'N/A',
+            onExample: word.onExample || 'N/A'
+          };
+        case 'verbs':
+          return {
+            main: word.meaning,
+            isVerbInverted: true,
+            infinitive: word.infinitive,
+            progressive: word.progressive,
+            politeForm: word.politeForm
+          };
+        default:
+          return { main: word.meaning, sub1: word.kanji, sub2: word.romaji };
+      }
+    }
+  };
 
   // Mélange les mots à chaque nouveau tour
   useEffect(() => {
@@ -261,7 +345,9 @@ const TrainingView = () => {
         <div className="flex-1 flex flex-col items-center justify-center p-4 gap-4">
           {/* Toggle d'inversion de carte */}
           <div className="flex items-center justify-center gap-3 mb-2">
-            <span className="text-sm font-medium text-gray-600">Kanji → Traduction</span>
+            <span className="text-sm font-medium text-gray-600">
+              {listCategory === 'verbs' ? 'Infinitif → Poli' : 'Kanji → Traduction'}
+            </span>
             <button
               onClick={handleToggleInversion}
               className={`p-2 rounded-lg transition-all duration-200 ${
@@ -270,11 +356,13 @@ const TrainingView = () => {
                   : 'bg-gray-200 text-gray-600 hover:bg-gray-300'
               }`}
               aria-label="Inverser la carte"
-              title={isFaceInverted ? "Mode: Traduction → Kanji" : "Mode: Kanji → Traduction"}
+              title={isFaceInverted ? "Mode inversé" : "Mode normal"}
             >
               <RefreshCw className="w-5 h-5" />
             </button>
-            <span className="text-sm font-medium text-gray-600">Traduction → Kanji</span>
+            <span className="text-sm font-medium text-gray-600">
+              {listCategory === 'verbs' ? 'Poli → Infinitif' : 'Traduction → Kanji'}
+            </span>
           </div>
 
           {/* Conteneur avec perspective pour l'effet 3D */}
@@ -312,27 +400,12 @@ const TrainingView = () => {
                 }}
               >
                 <div className="text-center">
-                  {!isFaceInverted ? (
-                    // Mode normal : Kanji en face avant
-                    <>
-                      <h1 className="text-5xl font-bold text-gray-800 mb-4">
-                        {currentWord.kanji}
-                      </h1>
-                      <p className="text-sm text-gray-400 mt-6">
-                        Cliquez pour révéler
-                      </p>
-                    </>
-                  ) : (
-                    // Mode inversé : Traduction française en face avant
-                    <>
-                      <h1 className="text-5xl font-bold text-gray-800 mb-4">
-                        {currentWord.meaning}
-                      </h1>
-                      <p className="text-sm text-gray-400 mt-6">
-                        Cliquez pour révéler
-                      </p>
-                    </>
-                  )}
+                  <h1 className="text-5xl font-bold text-gray-800 mb-4">
+                    {getFrontContent(currentWord, listCategory, isFaceInverted)}
+                  </h1>
+                  <p className="text-sm text-gray-400 mt-6">
+                    Cliquez pour révéler
+                  </p>
                 </div>
               </div>
 
@@ -348,35 +421,70 @@ const TrainingView = () => {
                 }}
               >
                 <div className="text-center">
-                  {!isFaceInverted ? (
-                    // Mode normal : Kanji + Romaji + Traduction en face arrière
-                    <>
+                  {(() => {
+                    const content = getBackContent(currentWord, listCategory, isFaceInverted);
+
+                    // Rendu spécial pour les kanji (mode normal)
+                    if (content.isKanji) {
+                      return (
+                        <div className="space-y-3">
+                          <h1 className="text-5xl font-bold text-gray-800">{content.main}</h1>
+                          <p className="text-xl text-gray-500">Kun: {content.kunReading} <span className="font-bold">(ex : {content.kunExample})</span></p>
+                          <p className="text-xl text-gray-500">On: {content.onReading} <span className="font-bold">(ex : {content.onExample})</span></p>
+                          <p className="text-lg text-gray-600">{content.meaning}</p>
+                        </div>
+                      );
+                    }
+
+                    // Rendu spécial pour les kanji (mode inversé)
+                    if (content.isKanjiInverted) {
+                      return (
+                        <div className="space-y-3">
+                          <h1 className="text-5xl font-bold text-gray-800">{content.main}</h1>
+                          <p className="text-2xl text-gray-500">{content.kanji}</p>
+                          <p className="text-xl text-gray-500">Kun: {content.kunReading} <span className="font-bold">(ex : {content.kunExample})</span></p>
+                          <p className="text-xl text-gray-500">On: {content.onReading} <span className="font-bold">(ex : {content.onExample})</span></p>
+                        </div>
+                      );
+                    }
+
+                    // Rendu spécial pour les verbes (mode normal)
+                    if (content.isVerb) {
+                      return (
+                        <div className="space-y-3">
+                          <h1 className="text-5xl font-bold text-gray-800">{content.main}</h1>
+                          <p className="text-xl text-gray-500">En action: {content.progressive}</p>
+                          <p className="text-xl text-gray-500">Poli: {content.politeForm}</p>
+                          <p className="text-lg text-gray-600">{content.meaning}</p>
+                        </div>
+                      );
+                    }
+
+                    // Rendu spécial pour les verbes (mode inversé)
+                    if (content.isVerbInverted) {
+                      return (
+                        <div className="space-y-3">
+                          <h1 className="text-5xl font-bold text-gray-800">{content.main}</h1>
+                          <p className="text-2xl text-gray-500">{content.infinitive}</p>
+                          <p className="text-xl text-gray-500">En action: {content.progressive}</p>
+                          <p className="text-xl text-gray-500">Poli: {content.politeForm}</p>
+                        </div>
+                      );
+                    }
+
+                    // Rendu standard pour words
+                    return (
                       <div className="space-y-3">
-                        <h1 className="text-5xl font-bold text-gray-800">
-                          {currentWord.kanji}
-                        </h1>
-                        <p className="text-2xl text-gray-500">{currentWord.romaji}</p>
-                        <p className="text-xl text-gray-600">{currentWord.meaning}</p>
+                        <h1 className="text-5xl font-bold text-gray-800">{content.main}</h1>
+                        {content.sub1 && <p className="text-2xl text-gray-500">{content.sub1}</p>}
+                        {content.sub2 && <p className="text-xl text-gray-600">{content.sub2}</p>}
+                        {content.sub3 && <p className="text-lg text-gray-500">{content.sub3}</p>}
                       </div>
-                      <p className="text-sm text-gray-400 mt-6">
-                        Cliquez pour continuer
-                      </p>
-                    </>
-                  ) : (
-                    // Mode inversé : Traduction + Kanji + Romaji en face arrière
-                    <>
-                      <div className="space-y-3">
-                        <h1 className="text-5xl font-bold text-gray-800">
-                          {currentWord.meaning}
-                        </h1>
-                        <p className="text-2xl text-gray-500">{currentWord.kanji}</p>
-                        <p className="text-2xl text-gray-500">{currentWord.romaji}</p>
-                      </div>
-                      <p className="text-sm text-gray-400 mt-6">
-                        Cliquez pour continuer
-                      </p>
-                    </>
-                  )}
+                    );
+                  })()}
+                  <p className="text-sm text-gray-400 mt-6">
+                    Cliquez pour continuer
+                  </p>
                 </div>
               </div>
             </div>

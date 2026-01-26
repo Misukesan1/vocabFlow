@@ -17,6 +17,7 @@ const listsSlice = createSlice({
       const newList = {
         id: nanoid(),
         name: action.payload.name,
+        category: action.payload.category || 'words',
         createdAt: new Date().toISOString(),
         trainingRounds: 0,
         words: [],
@@ -25,10 +26,11 @@ const listsSlice = createSlice({
     },
 
     updateList: (state, action) => {
-      const { id, name } = action.payload;
+      const { id, name, category } = action.payload;
       const list = state.lists.find((list) => list.id === id);
       if (list) {
-        list.name = name;
+        if (name !== undefined) list.name = name;
+        if (category !== undefined) list.category = category;
       }
     },
 
@@ -43,14 +45,12 @@ const listsSlice = createSlice({
 
     // Actions pour les mots
     addWord: (state, action) => {
-      const { listId, kanji, romaji, meaning } = action.payload;
+      const { listId, ...wordData } = action.payload;
       const list = state.lists.find((list) => list.id === listId);
       if (list) {
         const newWord = {
           id: nanoid(),
-          kanji,
-          romaji,
-          meaning,
+          ...wordData,
           isSelected: true,
         };
         list.words.push(newWord);
@@ -58,14 +58,12 @@ const listsSlice = createSlice({
     },
 
     updateWord: (state, action) => {
-      const { listId, wordId, kanji, romaji, meaning } = action.payload;
+      const { listId, wordId, ...wordData } = action.payload;
       const list = state.lists.find((list) => list.id === listId);
       if (list) {
         const word = list.words.find((word) => word.id === wordId);
         if (word) {
-          word.kanji = kanji;
-          word.romaji = romaji;
-          word.meaning = meaning;
+          Object.assign(word, wordData);
         }
       }
     },
@@ -129,9 +127,10 @@ const listsSlice = createSlice({
     // Action pour hydrater l'état depuis localStorage
     hydrateFromStorage: (state, action) => {
       if (action.payload) {
-        // Migrer les listes existantes pour ajouter trainingRounds et isSelected
+        // Migrer les listes existantes pour ajouter trainingRounds, category et isSelected
         const lists = action.payload.lists?.map(list => ({
           ...list,
+          category: list.category ?? 'words',
           trainingRounds: list.trainingRounds ?? 0,
           words: list.words?.map(word => ({
             ...word,

@@ -62,6 +62,7 @@ export const performMigration = async () => {
     const enrichedData = {
       lists: legacyData.lists?.map(list => ({
         ...list,
+        category: list.category ?? 'words',
         trainingRounds: list.trainingRounds ?? 0,
         words: list.words?.map(word => ({
           ...word,

@@ -258,6 +258,7 @@ const ListDetailView = () => {
                 onEdit={() => handleEditWord(word)}
                 onDelete={() => handleDeleteWord(word.id)}
                 onToggleSelection={() => handleToggleWordSelection(word.id)}
+                category={list.category}
               />
             ))}
           </div>
@@ -268,6 +269,7 @@ const ListDetailView = () => {
         isOpen={isCreateWordModalOpen}
         onClose={() => setIsCreateWordModalOpen(false)}
         onCreateWord={handleCreateWord}
+        category={list.category}
       />
 
       <EditWordModal
@@ -278,6 +280,7 @@ const ListDetailView = () => {
         }}
         onUpdateWord={handleUpdateWord}
         word={selectedWord}
+        category={list.category}
       />
 
       <EditListModal

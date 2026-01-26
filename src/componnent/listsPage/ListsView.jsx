@@ -11,8 +11,8 @@ const ListsView = () => {
   const lists = useSelector((state) => state.lists.lists);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
 
-  const handleCreateList = (name) => {
-    dispatch(createList({ name }));
+  const handleCreateList = (name, category) => {
+    dispatch(createList({ name, category }));
     dispatch(addToast({
       message: `Liste "${name}" créée avec succès`,
       type: 'success'

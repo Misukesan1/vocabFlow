@@ -1,25 +1,77 @@
 import { useState, useEffect } from 'react';
 import { X } from 'lucide-react';
 
-const EditWordModal = ({ isOpen, onClose, onUpdateWord, word }) => {
-  const [kanji, setKanji] = useState('');
-  const [romaji, setRomaji] = useState('');
-  const [meaning, setMeaning] = useState('');
-  const [errors, setErrors] = useState({
-    kanji: '',
-    romaji: '',
-    meaning: '',
-  });
+const EditWordModal = ({ isOpen, onClose, onUpdateWord, word, category = 'words' }) => {
+  const MAX_LENGTH = 200;
 
+  // Détermine les champs nécessaires selon la catégorie
+  const getFieldsForCategory = (cat) => {
+    switch(cat) {
+      case 'words':
+        return ['kanji', 'romaji', 'meaning'];
+      case 'kanji':
+        return ['kanji', 'kunReading', 'kunExample', 'onReading', 'onExample', 'meaning'];
+      case 'verbs':
+        return ['infinitive', 'progressive', 'politeForm', 'meaning'];
+      default:
+        return ['kanji', 'romaji', 'meaning'];
+    }
+  };
+
+  const fields = getFieldsForCategory(category);
+
+  // État dynamique basé sur les champs
+  const [formData, setFormData] = useState(
+    fields.reduce((acc, field) => ({ ...acc, [field]: '' }), {})
+  );
+  const [errors, setErrors] = useState(
+    fields.reduce((acc, field) => ({ ...acc, [field]: '' }), {})
+  );
+
+  // Pre-fill form when word changes
   useEffect(() => {
     if (word) {
-      setKanji(word.kanji);
-      setRomaji(word.romaji);
-      setMeaning(word.meaning);
+      const newFormData = {};
+      fields.forEach(field => {
+        newFormData[field] = word[field] || '';
+      });
+      setFormData(newFormData);
     }
-  }, [word]);
+  }, [word, category]);
 
-  const MAX_LENGTH = 200;
+  // Labels pour chaque champ
+  const getFieldLabel = (field) => {
+    const labels = {
+      kanji: 'Kanji / Hiragana / Katakana',
+      romaji: 'Romaji (alphabet latin)',
+      meaning: 'Signification',
+      kunReading: 'Lecture kun + romaji',
+      kunExample: 'Exemple kun',
+      onReading: 'Lecture on + romaji',
+      onExample: 'Exemple on',
+      infinitive: 'Verbe infinitif',
+      progressive: 'Verbe en action (en train de...)',
+      politeForm: 'Forme polie (masu)',
+    };
+    return labels[field] || field;
+  };
+
+  // Placeholders pour chaque champ
+  const getFieldPlaceholder = (field) => {
+    const placeholders = {
+      kanji: 'Ex: こんにちは',
+      romaji: 'Ex: konnichiwa',
+      meaning: 'Ex: Bonjour',
+      kunReading: 'Ex: ひ / hi',
+      kunExample: 'Ex: 日曜日',
+      onReading: 'Ex: ニチ / nichi',
+      onExample: 'Ex: 日本',
+      infinitive: 'Ex: 食べる',
+      progressive: 'Ex: 食べている',
+      politeForm: 'Ex: 食べます',
+    };
+    return placeholders[field] || `Ex: ${field}`;
+  };
 
   const validateField = (fieldName, value) => {
     if (!value.trim()) {
@@ -32,56 +84,35 @@ const EditWordModal = ({ isOpen, onClose, onUpdateWord, word }) => {
   };
 
   const validateAllFields = () => {
-    const newErrors = {
-      kanji: validateField('kanji', kanji),
-      romaji: validateField('romaji', romaji),
-      meaning: validateField('meaning', meaning),
-    };
+    const newErrors = {};
+    fields.forEach(field => {
+      newErrors[field] = validateField(field, formData[field]);
+    });
     setErrors(newErrors);
-    return !newErrors.kanji && !newErrors.romaji && !newErrors.meaning;
+    return !Object.values(newErrors).some(error => error !== '');
   };
 
   const handleInputChange = (field, value) => {
-    switch (field) {
-      case 'kanji':
-        setKanji(value);
-        if (errors.kanji) {
-          setErrors({ ...errors, kanji: validateField('kanji', value) });
-        }
-        break;
-      case 'romaji':
-        setRomaji(value);
-        if (errors.romaji) {
-          setErrors({ ...errors, romaji: validateField('romaji', value) });
-        }
-        break;
-      case 'meaning':
-        setMeaning(value);
-        if (errors.meaning) {
-          setErrors({ ...errors, meaning: validateField('meaning', value) });
-        }
-        break;
+    setFormData({ ...formData, [field]: value });
+    if (errors[field]) {
+      setErrors({ ...errors, [field]: validateField(field, value) });
     }
   };
 
   const handleSubmit = (e) => {
     e.preventDefault();
     if (validateAllFields()) {
-      onUpdateWord({
-        kanji: kanji.trim(),
-        romaji: romaji.trim(),
-        meaning: meaning.trim(),
+      const trimmedData = {};
+      fields.forEach(field => {
+        trimmedData[field] = formData[field].trim();
       });
-      setErrors({ kanji: '', romaji: '', meaning: '' });
+      onUpdateWord(trimmedData);
       onClose();
     }
   };
 
   const handleClose = () => {
-    setKanji('');
-    setRomaji('');
-    setMeaning('');
-    setErrors({ kanji: '', romaji: '', meaning: '' });
+    setErrors(fields.reduce((acc, field) => ({ ...acc, [field]: '' }), {}));
     onClose();
   };
 
@@ -89,10 +120,10 @@ const EditWordModal = ({ isOpen, onClose, onUpdateWord, word }) => {
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-      <div className="bg-white rounded-xl w-full max-w-md p-6">
+      <div className="bg-white rounded-xl w-full max-w-md p-6 max-h-[90vh] overflow-y-auto">
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-lg font-medium text-gray-700">
-            Modifier le mot
+            Modifier le {category === 'words' ? 'mot' : category === 'kanji' ? 'kanji' : 'verbe'}
           </h2>
           <button
             onClick={handleClose}
@@ -103,87 +134,35 @@ const EditWordModal = ({ isOpen, onClose, onUpdateWord, word }) => {
         </div>
 
         <form onSubmit={handleSubmit}>
-          <div className="mb-4">
-            <label
-              htmlFor="edit-kanji"
-              className="block text-sm font-medium text-gray-700 mb-2"
-            >
-              Kanji / Hiragana / Katakana
-            </label>
-            <input
-              id="edit-kanji"
-              type="text"
-              value={kanji}
-              onChange={(e) => handleInputChange('kanji', e.target.value)}
-              placeholder="Ex: こんにちは"
-              className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:border-transparent ${
-                errors.kanji
-                  ? 'border-red-300 focus:ring-red-600'
-                  : 'border-gray-200 focus:ring-purple-600'
-              }`}
-              autoFocus
-            />
-            {errors.kanji && (
-              <p className="mt-1 text-xs text-red-600">{errors.kanji}</p>
-            )}
-            <p className="mt-1 text-xs text-gray-400">
-              {kanji.length}/{MAX_LENGTH} caractères
-            </p>
-          </div>
-
-          <div className="mb-4">
-            <label
-              htmlFor="edit-romaji"
-              className="block text-sm font-medium text-gray-700 mb-2"
-            >
-              Romaji (alphabet latin)
-            </label>
-            <input
-              id="edit-romaji"
-              type="text"
-              value={romaji}
-              onChange={(e) => handleInputChange('romaji', e.target.value)}
-              placeholder="Ex: konnichiwa"
-              className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:border-transparent ${
-                errors.romaji
-                  ? 'border-red-300 focus:ring-red-600'
-                  : 'border-gray-200 focus:ring-purple-600'
-              }`}
-            />
-            {errors.romaji && (
-              <p className="mt-1 text-xs text-red-600">{errors.romaji}</p>
-            )}
-            <p className="mt-1 text-xs text-gray-400">
-              {romaji.length}/{MAX_LENGTH} caractères
-            </p>
-          </div>
-
-          <div className="mb-4">
-            <label
-              htmlFor="edit-meaning"
-              className="block text-sm font-medium text-gray-700 mb-2"
-            >
-              Signification
-            </label>
-            <input
-              id="edit-meaning"
-              type="text"
-              value={meaning}
-              onChange={(e) => handleInputChange('meaning', e.target.value)}
-              placeholder="Ex: Bonjour"
-              className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:border-transparent ${
-                errors.meaning
-                  ? 'border-red-300 focus:ring-red-600'
-                  : 'border-gray-200 focus:ring-purple-600'
-              }`}
-            />
-            {errors.meaning && (
-              <p className="mt-1 text-xs text-red-600">{errors.meaning}</p>
-            )}
-            <p className="mt-1 text-xs text-gray-400">
-              {meaning.length}/{MAX_LENGTH} caractères
-            </p>
-          </div>
+          {fields.map((field, index) => (
+            <div key={field} className="mb-4">
+              <label
+                htmlFor={field}
+                className="block text-sm font-medium text-gray-700 mb-2"
+              >
+                {getFieldLabel(field)}
+              </label>
+              <input
+                id={field}
+                type="text"
+                value={formData[field]}
+                onChange={(e) => handleInputChange(field, e.target.value)}
+                placeholder={getFieldPlaceholder(field)}
+                className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:border-transparent ${
+                  errors[field]
+                    ? 'border-red-300 focus:ring-red-600'
+                    : 'border-gray-200 focus:ring-purple-600'
+                }`}
+                autoFocus={index === 0}
+              />
+              {errors[field] && (
+                <p className="mt-1 text-xs text-red-600">{errors[field]}</p>
+              )}
+              <p className="mt-1 text-xs text-gray-400">
+                {formData[field].length}/{MAX_LENGTH} caractères
+              </p>
+            </div>
+          ))}
 
           <div className="flex gap-2 justify-end">
             <button

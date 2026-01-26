@@ -34,13 +34,13 @@ const Toast = ({ id, message, type, duration }) => {
   const getStyles = () => {
     switch (type) {
       case 'success':
-        return 'bg-gradient-to-r from-emerald-500 to-teal-500 text-white shadow-emerald-500/50';
+        return 'bg-gradient-to-r from-emerald-500/80 to-teal-500/80 text-white shadow-emerald-500/50';
       case 'error':
-        return 'bg-gradient-to-r from-rose-500 to-pink-500 text-white shadow-rose-500/50';
+        return 'bg-gradient-to-r from-rose-500/80 to-pink-500/80 text-white shadow-rose-500/50';
       case 'warning':
-        return 'bg-gradient-to-r from-amber-500 to-orange-500 text-white shadow-amber-500/50';
+        return 'bg-gradient-to-r from-amber-500/80 to-orange-500/80 text-white shadow-amber-500/50';
       default:
-        return 'bg-gradient-to-r from-blue-500 to-indigo-500 text-white shadow-blue-500/50';
+        return 'bg-gradient-to-r from-blue-500/80 to-indigo-500/80 text-white shadow-blue-500/50';
     }
   };
 
@@ -49,7 +49,7 @@ const Toast = ({ id, message, type, duration }) => {
       className={`
         ${getStyles()}
         flex items-center gap-3 px-4 py-3 rounded-2xl shadow-lg
-        backdrop-blur-sm border border-white/20
+        border border-white/20
         animate-[slideIn_0.3s_ease-out]
         hover:scale-105 transition-transform duration-200
         min-w-[280px] max-w-[400px]
